@@ -1,0 +1,28 @@
+Considerations:
+
+Scale - 
+Caching will not help in this case as you are not processing data from a database, however you can introduce an asychronous process using celery, however you will still need to monitor the number of requests that apache could handle using MaxClients.
+
+Another option is to split the process into two. One could handle the file download only (you can also add security using antivirus) and store these files locally to the workflow server, renaming depending on possibly the company who uploaded and the filename plus a timestamp.
+
+The second process in celery would use a directory monitor and pick up the event of the file finishing writing using PyInotify or Watchdog. This would only read the file and process accordingly.
+
+
+Efficiency -
+I have included a 'quick' process which compresses the image down to 1 pixel, which although not as accurate as using palette but it will be quicker.
+
+Using the palette from Pillow (aka PIL) I am resizing the image, however you can change the palette size which can vary the accuracy with the cost of processing a larger file.
+
+Resilience - 
+If this was in django I would create a decorator (e.g. @authenticated_company) which would use whatever validation process you currently have (or create a new one in django) each time an API is used. 
+
+Django has a CSRF (Cross site forgery protection) which could also be used in this case.
+
+
+Alerting/Monitoring - 
+If the process was split between two jobs then you can query rabbitMQ (linked to celery) to monitor the number of requests being processed. You can also monitor the number of files in the image dump directory with nagios. Also, you can use munin to monitor the URL/response time of the server.
+
+Nagios can monitor celery and rabbitMQ processes, but also you can introduce a 'heartbeat' to the process itself to make sure that the file monitoring process has not died or frozen.
+
+
+
