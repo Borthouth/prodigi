@@ -1,9 +1,11 @@
 Considerations:
 
 Scale - 
-Caching will not help in this case as you are not processing data from a database, however you can introduce an asychronous process using celery, however you will still need to monitor the number of requests that apache could handle using MaxClients.
+Caching will not help in this case as you are not processing data from a database, however you can introduce an asynchronous process using celery, however you will still need to monitor the number of requests that apache could handle using MaxClients.
 
-Another option is to split the process into two. One could handle the file download only (you can also add security using antivirus) and store these files locally to the workflow server, renaming depending on possibly the company who uploaded and the filename plus a timestamp.
+An API can not by itself be asynchronous as you are unable to hold the connection open (this will eventually timeout). I propose that we have an api to consume the file with a response '200 ok' and then a second api to post the results back to the sender.
+
+This means that you will split the process into two. One could handle the file download only (you can also add security using antivirus) and store these files locally to the workflow server, renaming depending on possibly the company who uploaded and the filename plus a timestamp.
 
 The second process in celery would use a directory monitor and pick up the event of the file finishing writing using PyInotify or Watchdog. This would only read the file and process accordingly.
 
